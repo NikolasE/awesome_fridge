@@ -35,7 +35,7 @@ def data_to_str(temp, is_open, dists):
 
 # print data_to_str(7, False, [123, 0010, 20])
 
-temp = 07
+temp = 10
 dists = [100, 200, 300]
 is_open = False
 

@@ -37,6 +37,23 @@ class FridgeDB:
         entries = self.read_state_file()
         return [(e.data[FridgeState.timestamp], e.data[FridgeState.open]) for e in entries]
 
+    def get_temperature(self):
+        entries = self.read_state_file()
+        return [(e.data[FridgeState.timestamp], e.data[FridgeState.temp]) for e in entries]
+
+    def get_distances(self):
+        entries = self.read_state_file()
+        l = list()
+        dist_cnt = 0
+        for e in entries:
+            d = e.data[FridgeState.distance]
+            dist_cnt = len(d)
+            line = [e.data[FridgeState.timestamp]]
+            line += d
+            l.append(line)
+        return l, dist_cnt
+
+
 
 class FridgeState:
     temp = 'temp'

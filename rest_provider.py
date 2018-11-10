@@ -12,11 +12,28 @@ api = Api(app)
 fdb = FridgeDB()
 
 @app.route('/door_open', methods=['GET'])
-def plot():
+def door_open():
     response = flask.jsonify({'plot': fdb.get_open_states()})
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
-print fdb.get_open_states()
+@app.route('/distance', methods=['GET'])
+def distance():
+    dists, dist_cnt = fdb.get_distances()
+    response = flask.jsonify({'data': dists, 'counter': dist_cnt})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
+
+@app.route('/temperature', methods=['GET'])
+def temperature():
+    response = flask.jsonify({'temps': fdb.get_temperature()})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
+
+
+
+
+
+# print fdb.get_open_states()
 
 app.run(debug=True)
