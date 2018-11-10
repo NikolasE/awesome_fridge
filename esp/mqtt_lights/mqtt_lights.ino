@@ -4,8 +4,8 @@
 #include <PubSubClient.h>
 
 #include <FastLED.h>
-#define LED_PIN     13
-#define NUM_LEDS    60
+#define LED_PIN     2
+#define NUM_LEDS    10
 CRGB leds[NUM_LEDS];
 
 int pattern_gap = 5;
@@ -15,16 +15,8 @@ int count = 0;
 int last = 0;
 int last_alarm = 0;
 
-// defines pins numbers
-const int trigPin = 2; //D4
-const int echoPin = 0; //D3
-
-// defines variables
-long duration;
-int distance;
 
 // Update these with values suitable for your network.
-
 const char *ssid = "AndroidAP4656";
 const char *password = "Moments2018";
 const char *mqtt_server = "broker.mqtt-dashboard.com";
@@ -62,14 +54,19 @@ void setup_wifi()
 
 void callback(char *topic, byte *payload, unsigned int length)
 {
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
-  for (int i = 0; i < length; i++)
-  {
-    Serial.print((char)payload[i]);
-  }
-  Serial.println();
+//  Serial.print("Message arrived [");
+  Serial.println(topic);
+//  Serial.print("] ");
+//  for (int i = 0; i < length; i++)
+//  {
+//    Serial.print((char)payload[i]);
+//  }
+//  Serial.println();
+
+//  char buf[100];
+  
+   set_pattern(String((char*)payload));
+  
 
   // Switch on the LED if an 1 was received as first character
   if ((char)payload[0] == '1')
@@ -82,6 +79,10 @@ void callback(char *topic, byte *payload, unsigned int length)
   {
     digitalWrite(BUILTIN_LED, HIGH); // Turn the LED off by making the voltage HIGH
   }
+
+  
+
+  
 }
 
 void reconnect()
@@ -117,10 +118,10 @@ void reconnect()
 void setup()
 {
   pinMode(BUILTIN_LED, OUTPUT); // Initialize the BUILTIN_LED pin as an output
-  Serial.begin(9600);
+  Serial.begin(115200);
 
-  pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
-  pinMode(echoPin, INPUT);  // Sets the echoPin as an Input
+//  pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
+//  pinMode(echoPin, INPUT);  // Sets the echoPin as an Input
 
   setup_wifi();
   client.setServer(mqtt_server, 1883);
@@ -128,24 +129,6 @@ void setup()
 
   FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
 
-}
-
-long getDistance()
-{
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
-
-  // Sets the trigPin on HIGH state for 10 micro seconds
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
-
-  // Reads the echoPin, returns the sound wave travel time in microseconds
-  duration = pulseIn(echoPin, HIGH);
-
-  // Calculating the distance
-  distance = duration * 0.034 / 2;
-  return distance;
 }
 
 void loop()
@@ -157,20 +140,7 @@ void loop()
   }
   client.loop();
 
-  long now = millis();
-  if (now - lastMsg > 1000)
-  {
-    lastMsg = now;
-    ++value;
-    //Serial.print("Publish message: ");
-    long dist = getDistance();
-    snprintf(msg, 50, "dist: %ld: %ld", value, dist);
-
-    Serial.println(msg);
-    client.publish("hello_world_arduino", msg);
-  }
-
-    if(millis() - last_alarm > 100) {
+  if(millis() - last_alarm > 100) {
     if(_pattern == "alarm") {
         set_pattern("alarm_");
     } else if(_pattern == "alarm_") {
@@ -183,8 +153,9 @@ void loop()
 }
 
 void set_pattern(String pattern) {
+  Serial.println(pattern);
     _pattern = pattern;
-    if(pattern == "cola") {
+    if(pattern.startsWith("cola")) {
         for(int i = 0; i < NUM_LEDS; i++) {
             if(i % (pattern_gap*2) < pattern_gap) {
                 leds[i] = CRGB(255, 0, 0);
@@ -192,7 +163,7 @@ void set_pattern(String pattern) {
                 leds[i] = CRGB(0, 0, 255);
             }
         }
-    } else if(pattern == "diet") {
+    } else if(pattern.startsWith("diet")) {
         for(int i = 0; i < NUM_LEDS; i++) {
             if(i % (pattern_gap*2) < pattern_gap) {
                 leds[i] = CRGB(174, 226, 255);
@@ -200,7 +171,7 @@ void set_pattern(String pattern) {
                 leds[i] = CRGB(237, 237, 237);
             }
         }
-    } else if(pattern == "classic") {
+    } else if(pattern.startsWith("classic")) {
         for(int i = 0; i < NUM_LEDS; i++) {
             if(i % (pattern_gap*2) < pattern_gap) {
                 leds[i] = CRGB(0, 0, 255);
@@ -208,23 +179,25 @@ void set_pattern(String pattern) {
                 leds[i] = CRGB(237, 237, 237);
             }
         }
-    } else if(pattern == "nicolas") {
+    } else if(pattern.startsWith("Nikolas")) {
+        Serial.println("XXXXXXXXXXX");
         for(int i = 0; i < NUM_LEDS; i++) {
             leds[i] = CRGB(32, 255, 0);
         }
-    } else if(pattern == "michael") {
+    } else if(pattern.startsWith("Michael")) {
         for(int i = 0; i < NUM_LEDS; i++) {
             leds[i] = CRGB(244, 65, 235);
         }
-    } else if(pattern == "george") {
+    } else if(pattern.startsWith("George")) {
+        Serial.println("OOOOOOOOOOOOO");
         for(int i = 0; i < NUM_LEDS; i++) {
             leds[i] = CRGB(255, 170, 0);
         }
-    } else if(pattern == "alarm") {
+    } else if(pattern.startsWith("_alarm")) {
         for(int i = 0; i < NUM_LEDS; i++) {
             leds[i] = CRGB(255, 0, 0);
         }
-    } else if(pattern == "alarm_") {
+    } else if(pattern.startsWith("alarm")) {
         for(int i = 0; i < NUM_LEDS; i++) {
             leds[i] = CRGB(0, 0, 0);
         }

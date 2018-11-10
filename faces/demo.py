@@ -88,7 +88,7 @@ while True:
     if frame_id % 100 != 0:
         print face_names
         # for f in collected_faces:
-        client.publish("faces", "".join(collected_faces))
+        client.publish("faces", " ".join(collected_faces))
         collected_faces.clear()
 
     # Display the results
