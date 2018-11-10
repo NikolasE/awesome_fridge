@@ -3,9 +3,17 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 
+#include <string>
+
 // defines pins numbers
-const int trigPin = 2; //D4
-const int echoPin = 0; //D3
+const int ECHO_PIN = 2; //D4
+
+const int trigPin0 = 16; //D0
+const int trigPin1 = 5; //D1
+const int trigPin2 = 4; //D2
+const int trigPin3 = 0; //D3
+const int trigPin5 = 14; //D5
+const int trigPin6 = 12; //D6
 
 // defines variables
 long duration;
@@ -106,26 +114,31 @@ void setup()
   pinMode(BUILTIN_LED, OUTPUT); // Initialize the BUILTIN_LED pin as an output
   Serial.begin(9600);
 
-  pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
-  pinMode(echoPin, INPUT);  // Sets the echoPin as an Input
+  pinMode(trigPin0, OUTPUT); // Sets the TRIG_PIN as an Output
+  pinMode(trigPin1, OUTPUT); // Sets the TRIG_PIN as an Output
+  pinMode(trigPin2, OUTPUT); // Sets the TRIG_PIN as an Output
+  pinMode(trigPin3, OUTPUT); // Sets the TRIG_PIN as an Output
+  pinMode(trigPin5, OUTPUT); // Sets the TRIG_PIN as an Output
+  pinMode(trigPin6, OUTPUT); // Sets the TRIG_PIN as an Output
+  pinMode(ECHO_PIN, INPUT);  // Sets the echoPin as an Input
 
   setup_wifi();
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
 }
 
-long getDistance()
+long getDistance(int trigPin)
 {
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
 
-  // Sets the trigPin on HIGH state for 10 micro seconds
+  // Sets the TRIG_PIN on HIGH state for 10 micro seconds
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
 
   // Reads the echoPin, returns the sound wave travel time in microseconds
-  duration = pulseIn(echoPin, HIGH);
+  duration = pulseIn(ECHO_PIN, HIGH);
 
   // Calculating the distance
   distance = duration * 0.034 / 2;
@@ -147,9 +160,14 @@ void loop()
     lastMsg = now;
     ++value;
     //Serial.print("Publish message: ");
-    long dist = getDistance();
-    snprintf(msg, 50, "dist: %ld: %ld", value, dist);
-
+    long dist = getDistance(trigPin0);
+    snprintf(msg, 50, "0 dist: %ld: %ld", value, dist);
+    dist = getDistance(trigPin1);
+    snprintf(msg, 50, "1 dist: %ld: %ld", value, dist);
+    dist = getDistance(trigPin2);
+    snprintf(msg, 50, "2 dist: %ld: %ld", value, dist);
+    dist = getDistance(trigPin3);
+    snprintf(msg, 50, "3 dist: %ld: %ld", value, dist);
     Serial.println(msg);
     client.publish("hello_world_arduino", msg);
   }
