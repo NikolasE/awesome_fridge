@@ -33,8 +33,7 @@ def data_to_str(temp, is_open, dists):
     msg += dist_strings
     return msg
 
-print data_to_str(7, False, [123, 0010, 20])
-
+# print data_to_str(7, False, [123, 0010, 20])
 
 temp = 07
 dists = [100, 200, 300]
@@ -59,8 +58,8 @@ while True:
             dt = randint(-5, 5)
             dists[ndx] += dt
 
-    time.sleep(0.1)
+    time.sleep(1)
 
     msg = data_to_str(temp, is_open, dists)
     print msg
-    client.publish("hello_world", msg)
+    client.publish("fridge_state", msg)
