@@ -4,35 +4,33 @@
 #include <PubSubClient.h>
 
 #include <iomanip>
-#include <string>
-#include <sstream>
 #include <map>
+#include <sstream>
+#include <string>
 
-#define PAYLOAD_LEN 50
+#define BOARD_ID "01"
+#define MAX_PAYLOAD_LEN 50
 
-#define DOOR_SWITCH_PIN 2  // D4
+// IR switch pin
+#define DOOR_SWITCH_PIN 2 // D4
 
 // Maps sensor number --> Arduino-GPIO trigger pin
-// IMPORTANT: use Dx as the port (comment)
+// IMPORTANT: use Dx as the port on the ESP (see comments)
 std::map<int, int> trigPinMap = {
-  {0, 16},  // D0
-  {1, 5},   // D1
-  {2, 4},   // D2
-  {3, 0},   // D3
+    {0, 16}, // D0
+    {1, 5},  // D1
+    {2, 4},  // D2
+    {3, 0},  // D3
 };
 
 // Maps sensor number --> Arduino-GPIO echo pin
-// IMPORTANT: use Dx as the port (comment)
+// IMPORTANT: use Dx as the port on the ESP (see comment)
 std::map<int, int> echoPinMap = {
-  {0, 14},  // D5
-  {1, 12},  // D6
-  {2, 13},  // D7
-  {3, 15}   // D8
+    {0, 14}, // D5
+    {1, 12}, // D6
+    {2, 13}, // D7
+    {3, 15}  // D8
 };
-
-// defines variables
-long duration;
-int distance;
 
 // Update these with values suitable for your network.
 
@@ -42,12 +40,8 @@ const char *mqtt_server = "broker.mqtt-dashboard.com";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
-long lastMsg = 0;
-char msg[PAYLOAD_LEN];
-int value = 0;
 
-void setup_wifi()
-{
+void setup_wifi() {
 
   delay(10);
   // We start by connecting to a WiFi network
@@ -57,8 +51,7 @@ void setup_wifi()
 
   WiFi.begin(ssid, password);
 
-  while (WiFi.status() != WL_CONNECTED)
-  {
+  while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
@@ -71,50 +64,42 @@ void setup_wifi()
   Serial.println(WiFi.localIP());
 }
 
-void callback(char *topic, byte *payload, unsigned int length)
-{
+void callback(char *topic, byte *payload, unsigned int length) {
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
-  for (int i = 0; i < length; i++)
-  {
+  for (int i = 0; i < length; i++) {
     Serial.print((char)payload[i]);
   }
   Serial.println();
 
-  // Switch on the LED if an 1 was received as first character
-  if ((char)payload[0] == '1')
-  {
-    digitalWrite(BUILTIN_LED, LOW); // Turn the LED on (Note that LOW is the voltage level
+  // Switch on the LED if an 1 was received as first character.
+  if ((char)payload[0] == '1') {
+    // Turn the LED on (Note that LOW is the voltage level
     // but actually the LED is on; this is because
-    // it is active low on the ESP-01)
-  }
-  else
-  {
-    digitalWrite(BUILTIN_LED, HIGH); // Turn the LED off by making the voltage HIGH
+    // it is active low on the ESP-01).
+    digitalWrite(BUILTIN_LED, LOW);
+  } else {
+    // Turn the LED off by making the voltage HIGH.
+    digitalWrite(BUILTIN_LED, HIGH);
   }
 }
 
-void reconnect()
-{
+void reconnect() {
   // Loop until we're reconnected
-  while (!client.connected())
-  {
+  while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
     // Create a random client ID
     String clientId = "ESP8266Client-";
     clientId += String(random(0xffff), HEX);
     // Attempt to connect
-    if (client.connect(clientId.c_str()))
-    {
+    if (client.connect(clientId.c_str())) {
       Serial.println("connected");
       // Once connected, publish an announcement...
       client.publish("hello_world_arduino", "hello world");
       // ... and resubscribe
       // client.subscribe("hello_world_arduino");
-    }
-    else
-    {
+    } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
       Serial.println(" try again in 5 seconds");
@@ -124,19 +109,18 @@ void reconnect()
   }
 }
 
-void setup()
-{
+void setup() {
   Serial.begin(9600);
-  
-  pinMode(BUILTIN_LED, OUTPUT); // Initialize the BUILTIN_LED pin as an output
+
+  pinMode(BUILTIN_LED, OUTPUT);
 
   pinMode(DOOR_SWITCH_PIN, INPUT);
 
-  for (const auto& pair : trigPinMap) {
+  for (const auto &pair : trigPinMap) {
     pinMode(pair.second, OUTPUT);
   }
 
-  for (const auto& pair : echoPinMap) {
+  for (const auto &pair : echoPinMap) {
     pinMode(pair.second, INPUT);
   }
 
@@ -145,50 +129,58 @@ void setup()
   client.setCallback(callback);
 }
 
-long getDistance(int trigPin, int echoPin)
-{
+long getDistance(int trigPin, int echoPin) {
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
 
-  // Sets the TRIG_PIN on HIGH state for 10 micro seconds
+  // Send a trigger pulse.
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
 
-  // Reads the echoPin, returns the sound wave travel time in microseconds
-  duration = pulseIn(echoPin, HIGH);
+  // Reads the echoPin, returns the sound wave travel time in microseconds.
+  long duration = pulseIn(echoPin, HIGH);
 
-  // Calculating the distance
-  distance = duration * 0.034 / 2;
+  // Calculate the distance in mm.
+  long distance = duration * 0.034 / 2;
   return distance;
 }
 
-void loop()
-{
-
-  if (!client.connected())
-  {
+void loop() {
+  if (!client.connected()) {
     reconnect();
   }
   client.loop();
 
-  long now = millis();
-  if (now - lastMsg > 500)
-  {
-    lastMsg = now;
-    ++value;
-    //Serial.print("Publish message: ");
-    String payload = "AF_00";
-    payload += "_" + String(digitalRead(DOOR_SWITCH_PIN));
-    payload += "_" + String(trigPinMap.size());
-    for (int i = 0; i < trigPinMap.size(); ++i) {
-      long dist = getDistance(trigPinMap[i], echoPinMap[i]);
-      char paddedValue[5];
-      sprintf(paddedValue, "%04d", dist);
-      payload += "_" + String(paddedValue);
-    }
-   Serial.println(payload);
-   payload.toCharArray(msg, PAYLOAD_LEN);
-   client.publish("ultrasonic", msg);
+  // Add our sophisticated magic number "AF" and the board ID.
+  String payload = "AF_" + String(BOARD_ID);
+
+  // Add the temperature value.
+  // TODO: add driver for DHT22
+  String temperature = "00";
+  payload += "_" + temperature;
+
+  // Add boolean if the door is open.
+  payload += "_" + String(digitalRead(DOOR_SWITCH_PIN));
+
+  // Add the number of ultrasonic sensors.
+  payload += "_" + String(trigPinMap.size());
+
+  // Add ultrasonic sensor data.
+  for (int i = 0; i < trigPinMap.size(); ++i) {
+    long dist = getDistance(trigPinMap[i], echoPinMap[i]);
+    char paddedValue[5];
+    sprintf(paddedValue, "%04d", dist);
+    payload += "_" + String(paddedValue);
   }
+
+  // debug
+  Serial.println(payload);
+
+  // Publish the payload.
+  char msg[MAX_PAYLOAD_LEN];
+  payload.toCharArray(msg, MAX_PAYLOAD_LEN);
+  client.publish("ultrasonic", msg);
+
+  delay(500);
 }
