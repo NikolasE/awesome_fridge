@@ -1,11 +1,9 @@
-
-
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 
 #include <FastLED.h>
 #define LED_PIN     2
-#define NUM_LEDS    10
+#define NUM_LEDS    60
 CRGB leds[NUM_LEDS];
 
 int pattern_gap = 5;
@@ -26,6 +24,7 @@ PubSubClient client(espClient);
 long lastMsg = 0;
 char msg[50];
 int value = 0;
+
 
 void setup_wifi()
 {
@@ -54,19 +53,9 @@ void setup_wifi()
 
 void callback(char *topic, byte *payload, unsigned int length)
 {
-//  Serial.print("Message arrived [");
   Serial.println(topic);
-//  Serial.print("] ");
-//  for (int i = 0; i < length; i++)
-//  {
-//    Serial.print((char)payload[i]);
-//  }
-//  Serial.println();
 
-//  char buf[100];
-  
-   set_pattern(String((char*)payload));
-  
+  set_pattern(String((char*)payload));
 
   // Switch on the LED if an 1 was received as first character
   if ((char)payload[0] == '1')
@@ -79,10 +68,6 @@ void callback(char *topic, byte *payload, unsigned int length)
   {
     digitalWrite(BUILTIN_LED, HIGH); // Turn the LED off by making the voltage HIGH
   }
-
-  
-
-  
 }
 
 void reconnect()
@@ -99,10 +84,9 @@ void reconnect()
     {
       Serial.println("connected");
       // Once connected, publish an announcement...
-      client.publish("hello_world_arduino", "hello world");
+      // client.publish("hello_world_arduino", "hello world");
       // ... and resubscribe
-      client.subscribe("faces");
-      
+      client.subscribe("led");
     }
     else
     {
@@ -119,9 +103,6 @@ void setup()
 {
   pinMode(BUILTIN_LED, OUTPUT); // Initialize the BUILTIN_LED pin as an output
   Serial.begin(115200);
-
-//  pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
-//  pinMode(echoPin, INPUT);  // Sets the echoPin as an Input
 
   setup_wifi();
   client.setServer(mqtt_server, 1883);
@@ -140,14 +121,6 @@ void loop()
   }
   client.loop();
 
-  if(millis() - last_alarm > 100) {
-    if(_pattern == "alarm") {
-        set_pattern("alarm_");
-    } else if(_pattern == "alarm_") {
-        set_pattern("alarm");
-    }
-    last_alarm = millis();
-  }
   FastLED.show();
   delay(1);
 }
@@ -180,7 +153,6 @@ void set_pattern(String pattern) {
             }
         }
     } else if(pattern.startsWith("Nikolas")) {
-        Serial.println("XXXXXXXXXXX");
         for(int i = 0; i < NUM_LEDS; i++) {
             leds[i] = CRGB(32, 255, 0);
         }
@@ -189,17 +161,16 @@ void set_pattern(String pattern) {
             leds[i] = CRGB(244, 65, 235);
         }
     } else if(pattern.startsWith("George")) {
-        Serial.println("OOOOOOOOOOOOO");
         for(int i = 0; i < NUM_LEDS; i++) {
             leds[i] = CRGB(255, 170, 0);
         }
-    } else if(pattern.startsWith("_alarm")) {
+    } else if(pattern.startsWith("alarm")) {
         for(int i = 0; i < NUM_LEDS; i++) {
             leds[i] = CRGB(255, 0, 0);
         }
-    } else if(pattern.startsWith("alarm")) {
+    } else if(pattern.startsWith("dark")) {
         for(int i = 0; i < NUM_LEDS; i++) {
-            leds[i] = CRGB(0, 0, 0);
+            leds[i] = CRGB(100, 100, 100);
         }
     }
 }

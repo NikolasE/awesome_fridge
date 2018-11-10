@@ -17,11 +17,12 @@ client.on_connect = on_connect
 client.on_message = on_message
 client.connect("broker.mqttdashboard.com", 1883)
 
-
+with_output = False
 
 
 video_capture = cv2.VideoCapture(0)
-files = ['Nikolas.png', 'George.png', 'Michael.png']
+# files = ['George.png', 'Michael.png'] # 'Nikolas.png',
+files = ['George.png', 'Michael.png', "Nikolas.png"]
 
 # Load a sample picture and learn how to recognize it.
 # obama_image = face_recognition.load_image_file("nikolas.png")
@@ -47,7 +48,7 @@ face_encodings = []
 face_names = []
 process_this_frame = True
 
-frame_id = 0
+frame_id = -1
 
 collected_faces = set()
 
@@ -85,10 +86,18 @@ while True:
 
     # process_this_frame = not process_this_frame
 
-    if frame_id % 100 != 0:
+    if frame_id % 50 == 0:
         print face_names
-        # for f in collected_faces:
         client.publish("faces", " ".join(collected_faces))
+        # client.publish("text_to_speech", " ".join(collected_faces))
+        # for f in face_names:
+        #     pass
+        #     # if f == 'George':
+        #     #     f = 'idiot'
+        #     # if f == "Nikolas":
+        #     #     f += " strongest Avenger"
+        #     client.publish("text_to_speech", "HELLO " + f)
+
         collected_faces.clear()
 
     # Display the results
@@ -108,7 +117,8 @@ while True:
         cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
 
     # Display the resulting image
-    cv2.imshow('Video', frame)
+    if with_output:
+        cv2.imshow('Video', frame)
 
     # Hit 'q' on the keyboard to quit!
     if cv2.waitKey(1) & 0xFF == ord('q'):
