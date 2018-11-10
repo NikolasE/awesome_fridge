@@ -14,22 +14,20 @@
 // IR switch pin
 #define DOOR_SWITCH_PIN 2 // D4
 
-// Maps sensor number --> Arduino-GPIO trigger pin
 // IMPORTANT: use Dx as the port on the ESP (see comments)
-std::map<int, int> trigPinMap = {
-    {0, 16}, // D0
-    {1, 5},  // D1
-    {2, 4},  // D2
-    {3, 0},  // D3
+std::array<int, 4> trigPins = {
+    16, // D0
+    5,  // D1
+    4,  // D2
+    0,  // D3
 };
 
-// Maps sensor number --> Arduino-GPIO echo pin
 // IMPORTANT: use Dx as the port on the ESP (see comment)
-std::map<int, int> echoPinMap = {
-    {0, 14}, // D5
-    {1, 12}, // D6
-    {2, 13}, // D7
-    {3, 15}  // D8
+std::array<int, 4> echoPins = {
+    14, // D5
+    12, // D6
+    13, // D7
+    15  // D8
 };
 
 // Update these with values suitable for your network.
@@ -116,12 +114,12 @@ void setup() {
 
   pinMode(DOOR_SWITCH_PIN, INPUT);
 
-  for (const auto &pair : trigPinMap) {
-    pinMode(pair.second, OUTPUT);
+  for (const auto &pin : trigPins) {
+    pinMode(pin, OUTPUT);
   }
 
-  for (const auto &pair : echoPinMap) {
-    pinMode(pair.second, INPUT);
+  for (const auto &pin : echoPins) {
+    pinMode(pin, INPUT);
   }
 
   setup_wifi();
@@ -164,11 +162,11 @@ void loop() {
   payload += "_" + String(digitalRead(DOOR_SWITCH_PIN));
 
   // Add the number of ultrasonic sensors.
-  payload += "_" + String(trigPinMap.size());
+  payload += "_" + String(trigPins.size());
 
   // Add ultrasonic sensor data.
-  for (int i = 0; i < trigPinMap.size(); ++i) {
-    long dist = getDistance(trigPinMap[i], echoPinMap[i]);
+  for (int i = 0; i < trigPins.size(); ++i) {
+    long dist = getDistance(trigPins[i], echoPins[i]);
     char paddedValue[5];
     sprintf(paddedValue, "%04d", dist);
     payload += "_" + String(paddedValue);
@@ -180,7 +178,7 @@ void loop() {
   // Publish the payload.
   char msg[MAX_PAYLOAD_LEN];
   payload.toCharArray(msg, MAX_PAYLOAD_LEN);
-  client.publish("ultrasonic", msg);
+  client.publish("fridge_state", msg);
 
-  delay(500);
+  delay(2000);
 }
