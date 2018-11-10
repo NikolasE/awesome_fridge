@@ -3,11 +3,14 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 
+#include <iomanip>
 #include <string>
+#include <sstream>
 #include <map>
 
-// defines pins numbers
-const int ECHO_PIN = 2; //D4
+#define PAYLOAD_LEN 50
+
+#define DOOR_SWITCH_PIN 2  // D4
 
 // Maps sensor number --> Arduino-GPIO trigger pin
 // IMPORTANT: use Dx as the port (comment)
@@ -40,7 +43,7 @@ const char *mqtt_server = "broker.mqtt-dashboard.com";
 WiFiClient espClient;
 PubSubClient client(espClient);
 long lastMsg = 0;
-char msg[50];
+char msg[PAYLOAD_LEN];
 int value = 0;
 
 void setup_wifi()
@@ -123,8 +126,11 @@ void reconnect()
 
 void setup()
 {
-  pinMode(BUILTIN_LED, OUTPUT); // Initialize the BUILTIN_LED pin as an output
   Serial.begin(9600);
+  
+  pinMode(BUILTIN_LED, OUTPUT); // Initialize the BUILTIN_LED pin as an output
+
+  pinMode(DOOR_SWITCH_PIN, INPUT);
 
   for (const auto& pair : trigPinMap) {
     pinMode(pair.second, OUTPUT);
@@ -167,16 +173,22 @@ void loop()
   client.loop();
 
   long now = millis();
-  if (now - lastMsg > 1000)
+  if (now - lastMsg > 500)
   {
     lastMsg = now;
     ++value;
     //Serial.print("Publish message: ");
+    String payload = "AF_00";
+    payload += "_" + String(digitalRead(DOOR_SWITCH_PIN));
+    payload += "_" + String(trigPinMap.size());
     for (int i = 0; i < trigPinMap.size(); ++i) {
       long dist = getDistance(trigPinMap[i], echoPinMap[i]);
-      snprintf(msg, 50, "3 dist: %ld: %ld", value, dist);
-      Serial.println(msg);
-      client.publish("AF_", msg);
+      char paddedValue[5];
+      sprintf(paddedValue, "%04d", dist);
+      payload += "_" + String(paddedValue);
     }
+   Serial.println(payload);
+   payload.toCharArray(msg, PAYLOAD_LEN);
+   client.publish("ultrasonic", msg);
   }
 }
