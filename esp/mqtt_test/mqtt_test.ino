@@ -4,16 +4,28 @@
 #include <PubSubClient.h>
 
 #include <string>
+#include <map>
 
 // defines pins numbers
 const int ECHO_PIN = 2; //D4
 
-const int trigPin0 = 16; //D0
-const int trigPin1 = 5; //D1
-const int trigPin2 = 4; //D2
-const int trigPin3 = 0; //D3
-const int trigPin5 = 14; //D5
-const int trigPin6 = 12; //D6
+// Maps sensor number --> Arduino-GPIO trigger pin
+// IMPORTANT: use Dx as the port (comment)
+std::map<int, int> trigPinMap = {
+  {0, 16},  // D0
+  {1, 5},   // D1
+  {2, 4},   // D2
+  {3, 0},   // D3
+};
+
+// Maps sensor number --> Arduino-GPIO echo pin
+// IMPORTANT: use Dx as the port (comment)
+std::map<int, int> echoPinMap = {
+  {0, 14},  // D5
+  {1, 12},  // D6
+  {2, 13},  // D7
+  {3, 15}   // D8
+};
 
 // defines variables
 long duration;
@@ -114,20 +126,20 @@ void setup()
   pinMode(BUILTIN_LED, OUTPUT); // Initialize the BUILTIN_LED pin as an output
   Serial.begin(9600);
 
-  pinMode(trigPin0, OUTPUT); // Sets the TRIG_PIN as an Output
-  pinMode(trigPin1, OUTPUT); // Sets the TRIG_PIN as an Output
-  pinMode(trigPin2, OUTPUT); // Sets the TRIG_PIN as an Output
-  pinMode(trigPin3, OUTPUT); // Sets the TRIG_PIN as an Output
-  pinMode(trigPin5, OUTPUT); // Sets the TRIG_PIN as an Output
-  pinMode(trigPin6, OUTPUT); // Sets the TRIG_PIN as an Output
-  pinMode(ECHO_PIN, INPUT);  // Sets the echoPin as an Input
+  for (const auto& pair : trigPinMap) {
+    pinMode(pair.second, OUTPUT);
+  }
+
+  for (const auto& pair : echoPinMap) {
+    pinMode(pair.second, INPUT);
+  }
 
   setup_wifi();
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
 }
 
-long getDistance(int trigPin)
+long getDistance(int trigPin, int echoPin)
 {
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
@@ -138,7 +150,7 @@ long getDistance(int trigPin)
   digitalWrite(trigPin, LOW);
 
   // Reads the echoPin, returns the sound wave travel time in microseconds
-  duration = pulseIn(ECHO_PIN, HIGH);
+  duration = pulseIn(echoPin, HIGH);
 
   // Calculating the distance
   distance = duration * 0.034 / 2;
@@ -160,15 +172,11 @@ void loop()
     lastMsg = now;
     ++value;
     //Serial.print("Publish message: ");
-    long dist = getDistance(trigPin0);
-    snprintf(msg, 50, "0 dist: %ld: %ld", value, dist);
-    dist = getDistance(trigPin1);
-    snprintf(msg, 50, "1 dist: %ld: %ld", value, dist);
-    dist = getDistance(trigPin2);
-    snprintf(msg, 50, "2 dist: %ld: %ld", value, dist);
-    dist = getDistance(trigPin3);
-    snprintf(msg, 50, "3 dist: %ld: %ld", value, dist);
-    Serial.println(msg);
-    client.publish("hello_world_arduino", msg);
+    for (int i = 0; i < trigPinMap.size(); ++i) {
+      long dist = getDistance(trigPinMap[i], echoPinMap[i]);
+      snprintf(msg, 50, "3 dist: %ld: %ld", value, dist);
+      Serial.println(msg);
+      client.publish("AF_", msg);
+    }
   }
 }
