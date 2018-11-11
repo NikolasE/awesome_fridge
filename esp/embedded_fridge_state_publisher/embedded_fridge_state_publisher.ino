@@ -1,3 +1,4 @@
+#include <array>
 #include <vector>
 
 #include <EEPROM.h>
@@ -12,10 +13,10 @@
 #define MAX_PAYLOAD_LEN 50
 
 // IR switch pin
-#define DOOR_SWITCH_PIN 9 // SD2
+#define DOOR_SWITCH_PIN 15 // D8
 
 // DHT temperature sensor
-#define DHTPIN 10  // SD3
+#define DHTPIN 2  // D4
 #define DHTTYPE DHT22
 
 // IMPORTANT: use Dx as the port on the ESP (see comments)
@@ -23,8 +24,8 @@ std::vector<int> trigPins = {
     16, // D0
     5,  // D1
     4,  // D2
-    0,  // D3
-    2,  // D4
+//    0,  // D3
+//    2,  // D4
 };
 
 // IMPORTANT: use Dx as the port on the ESP (see comment)
@@ -32,8 +33,8 @@ std::vector<int> echoPins = {
     14, // D5
     12, // D6
     13, // D7
-    15, // D8
-    3,  // RX
+//    15, // D8
+//    3,  // RX
 };
 
 // Update these with values suitable for your network.
@@ -128,12 +129,17 @@ void setup() {
   for (const auto &pin : echoPins) {
     pinMode(pin, INPUT);
   }
+  Serial.println("dsdsp finished");
 
   dht.begin();
+  Serial.println("DHT finished");
 
   setup_wifi();
+  Serial.println("setup finished");
   client.setServer(mqtt_server, 1883);
+  Serial.println("setServer finished");
   client.setCallback(callback);
+  Serial.println("setCBr finished");
 }
 
 long getDistance(int trigPin, int echoPin) {
@@ -154,6 +160,7 @@ long getDistance(int trigPin, int echoPin) {
 }
 
 void loop() {
+  Serial.println("loop");
   if (!client.connected()) {
     reconnect();
   }
