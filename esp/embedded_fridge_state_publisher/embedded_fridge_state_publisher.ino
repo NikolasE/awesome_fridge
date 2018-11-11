@@ -1,43 +1,51 @@
+#include <vector>
 
-
+#include <EEPROM.h>
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#include <GDBStub.h>
+#include "DHT.h"
 
-#include <iomanip>
-#include <map>
-#include <sstream>
-#include <string>
-
+// ID == floor number
 #define BOARD_ID "01"
+
 #define MAX_PAYLOAD_LEN 50
 
 // IR switch pin
-#define DOOR_SWITCH_PIN 2 // D4
+#define DOOR_SWITCH_PIN 9 // SD2
+
+// DHT temperature sensor
+#define DHTPIN 10  // SD3
+#define DHTTYPE DHT22
 
 // IMPORTANT: use Dx as the port on the ESP (see comments)
-std::array<int, 4> trigPins = {
+std::vector<int> trigPins = {
     16, // D0
     5,  // D1
     4,  // D2
     0,  // D3
+    2,  // D4
 };
 
 // IMPORTANT: use Dx as the port on the ESP (see comment)
-std::array<int, 4> echoPins = {
+std::vector<int> echoPins = {
     14, // D5
     12, // D6
     13, // D7
-    15  // D8
+    15, // D8
+    3,  // RX
 };
 
 // Update these with values suitable for your network.
-
 const char *ssid = "AndroidAP4656";
 const char *password = "Moments2018";
 const char *mqtt_server = "broker.mqtt-dashboard.com";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
+
+// Temperature sensor.
+DHT dht(DHTPIN, DHTTYPE);
 
 void setup_wifi() {
   delay(10);
@@ -121,6 +129,8 @@ void setup() {
     pinMode(pin, INPUT);
   }
 
+  dht.begin();
+
   setup_wifi();
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
@@ -153,10 +163,14 @@ void loop() {
   String payload = "AF_" + String(BOARD_ID);
 
   // Add the temperature value.
-  // TODO: add driver for DHT22
-  String temperature = "00";
-  payload += "_" + temperature;
-
+  float t = dht.readTemperature();
+  if (isnan(t)) {
+    payload += "_00";
+  } else {
+    char paddedTempValue[4];
+    sprintf(paddedTempValue, "%03d", (int)(t*10));
+    payload += "_" + String(paddedTempValue);
+  }
   // Add boolean if the door is open.
   payload += "_" + String(digitalRead(DOOR_SWITCH_PIN));
 
