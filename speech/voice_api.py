@@ -10,6 +10,11 @@ pygame.init()
 # mp3cut -o hot_short.mp3 -t 00:02:05+000-00:02:13+000 HotInHerre.mp3
 
 def text_to_speech(text, speed=50, gap=5):
+	if "Shame" in text:
+		speed = 50
+	else:
+		speed = 120
+
 	p = subprocess.Popen(['espeak', '-s{}'.format(speed), '-g{}'.format(gap), text])
 
 def stop_sound():
@@ -17,7 +22,7 @@ def stop_sound():
     pygame.mixer.music.stop()    
 
 def hot_in_here():
-    play_file('/home/magazino/Desktop/hot_short.mp3')
+    play_file('hot_short.mp3')
 
 def get_low():
 	play_file('/home/magazino/Desktop/GetLow.mp3')

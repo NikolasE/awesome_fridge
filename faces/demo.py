@@ -17,11 +17,11 @@ client.on_connect = on_connect
 client.on_message = on_message
 client.connect("broker.mqttdashboard.com", 1883)
 
-with_output = False
+with_output = True
 
 video_capture = cv2.VideoCapture(1)
 #files = ['George.png', 'Michael.png'] 
-files = ['George.png', 'Michael.png', "Nikolas.png"]
+files = ['Michael.png', "Nikolas.png"]
 
 # Load a sample picture and learn how to recognize it.
 # obama_image = face_recognition.load_image_file("nikolas.png")
@@ -86,12 +86,13 @@ while True:
 
     # process_this_frame = not process_this_frame
 
-    if frame_id % 30 == 0:
+    if frame_id % 50 == 0:
         print face_names
         for f in collected_faces:
-          client.publish("faces", f)
-        if not collected_faces:
-            client.publish("faces", "dark")  # published as led-command
+            if f != "Unknown":
+                client.publish("faces", f)
+        # if not collected_faces:
+        #     client.publish("faces", "dark")  # published as led-command
 
         collected_faces.clear()
 

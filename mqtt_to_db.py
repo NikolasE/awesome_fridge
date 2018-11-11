@@ -25,6 +25,8 @@ class FridgeDB:
         self._fridge_is_open = None
         self.client = None
         self.alarm_active = False
+        self._last_distances = list()
+        self._open_user = ""
 
     def _ensure_file(self, filename):
         if not os.path.exists(filename):
@@ -37,20 +39,22 @@ class FridgeDB:
         self._last_face_time = time.time()
         if not self.alarm_active:
 
-            if face_name == "Unknown":
-                self.set_led('alarm')  # red
-            else:
-                self.set_led(face_name)
+            # if face_name == "Unknown":
+            #     self.set_led('alarm')  # red
+            # else:
+            self.set_led(face_name)
 
     def start_alarm(self):
         if self.alarm_active:
             return
+        print "START ALARM"
 
         self.alarm_active = True
         self.set_led('alarm')  # 100, 100, 100
 
-        # self.client.publish("text_to_speech", "SHAME " + self._last_face_name + " SHAME");
-        self.client.publish("text_to_speech", "a")
+        # self.client.publish("text_to_speech", "SHAME " + self._open_user + " SHAME")
+        # time.sleep(5)
+        # self.client.publish("text_to_speech", "a")
         self.client.publish("music", str("hot"))
 
         f = open(self.door_file, 'a')
@@ -65,6 +69,25 @@ class FridgeDB:
         self.set_led('dark')  # 100, 100, 100
         self.client.publish('music', "stop")
 
+    def door_close_event(self, cur_dist):
+        if not self._last_distances:
+            return
+
+        print "door closed by", self._open_user
+        print "last dist", self._last_distances
+        print "current dist", cur_dist
+
+        for i in range(3):
+            diff = cur_dist[i] - self._last_distances[i]
+            if diff > 10:
+                print "removed from stack ", i
+                msg = self._last_face_name + " removed a can from stack " + str(2-i)
+                self.client.publish("text_to_speech", msg)
+            if diff < -10:
+                print "added from stack ", i
+                msg = self._last_face_name + " added a can to stack " + str(2 - i)
+                self.client.publish("text_to_speech", msg)
+
     def store_fridge_state(self, fs):
         door_open = fs.data[fs.open]
 
@@ -74,11 +97,14 @@ class FridgeDB:
         if self._fridge_is_open != door_open:
             print ("DOOR OPEN CHANGED to " + str(door_open) + " by " + self._last_face_name)
             self._fridge_is_open = door_open
+            self._open_user = self._last_face_name
 
             if self._fridge_is_open:
                 t = time.time()
                 # print "door was opened at ", t
                 self._last_door_open_time = t
+            else:
+                self.door_close_event(fs.data[fs.distance])
 
         # print self._fridge_is_open, self._last_door_open_time
         # check how long fridge was opened:
@@ -86,9 +112,12 @@ class FridgeDB:
             dt = (time.time() - self._last_door_open_time)
             print "fridge open for %f seconds" % dt
 
-            if dt > 5:
+            if dt > 4:
                 print self._last_face_name, "forgot to close the door"
                 self.start_alarm()
+
+        if not door_open:
+            self._last_distances = fs.data[fs.distance]
 
         assert isinstance(fs, FridgeState)
         f = open(self.state_file, 'a')
