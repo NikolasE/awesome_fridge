@@ -129,17 +129,12 @@ void setup() {
   for (const auto &pin : echoPins) {
     pinMode(pin, INPUT);
   }
-  Serial.println("dsdsp finished");
 
   dht.begin();
-  Serial.println("DHT finished");
 
   setup_wifi();
-  Serial.println("setup finished");
   client.setServer(mqtt_server, 1883);
-  Serial.println("setServer finished");
   client.setCallback(callback);
-  Serial.println("setCBr finished");
 }
 
 long getDistance(int trigPin, int echoPin) {
@@ -160,7 +155,6 @@ long getDistance(int trigPin, int echoPin) {
 }
 
 void loop() {
-  Serial.println("loop");
   if (!client.connected()) {
     reconnect();
   }
