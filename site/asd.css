@@ -5,3 +5,15 @@
     width: 1000px;
     height: 300px;
 }
+
+#cssTable td
+{
+    text-align: center;
+    vertical-align: middle;
+}
+
+table {
+    font-size: 120%;
+    margin-top: 50px;
+    align: center;
+}

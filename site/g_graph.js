@@ -29,6 +29,9 @@ function drawChartDist() {
     let dists = plot_data['data'];
     let counter = plot_data['counter'];
 
+    // console.log(dists);
+
+
     data.addColumn('date', 'X');
 
     // let i=0;
@@ -40,6 +43,8 @@ function drawChartDist() {
     {
         // if (i == 10)
         //     break;
+        console.log(i);
+        console.log(dists[i]);
         let d =  new Date(dists[i][0]*1000);
         data.addRow([d].concat(dists[i].splice(1)));
     }
@@ -57,7 +62,29 @@ function drawChartDist() {
     chart.draw(data, options);
 }
 
+function bla()
+{
+    let plot_data = get_plot_data('wrongdoers');
+    // console.log(['Nikolas']);
+
+    let user_names = ['Nikolas', "George", "Michael"];
+
+    let user_data = plot_data['wrongdoers'];
+
+    for (let u_id in user_names)
+    {
+        let user = user_names[u_id];
+        // console.log(user);
+        // console.log(user_data[user]);
+        document.getElementById(user).innerHTML = user_data[user].toString();
+    }
+}
+
+
 function drawChartTemp() {
+
+    bla();
+
     var data = new google.visualization.DataTable();
     let plot_data = get_plot_data('temperature');
 

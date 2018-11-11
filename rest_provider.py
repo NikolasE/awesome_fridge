@@ -30,7 +30,11 @@ def temperature():
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
-
+@app.route('/wrongdoers', methods=['GET'])
+def wrongdoers():
+    response = flask.jsonify({'wrongdoers': fdb.get_wrongdoers()})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 
 

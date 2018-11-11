@@ -19,9 +19,8 @@ client.connect("broker.mqttdashboard.com", 1883)
 
 with_output = False
 
-
-video_capture = cv2.VideoCapture(0)
-# files = ['George.png', 'Michael.png'] # 'Nikolas.png',
+video_capture = cv2.VideoCapture(1)
+#files = ['George.png', 'Michael.png'] 
 files = ['George.png', 'Michael.png', "Nikolas.png"]
 
 # Load a sample picture and learn how to recognize it.
@@ -57,6 +56,7 @@ while True:
 
     # Grab a single frame of video
     ret, frame = video_capture.read()
+    frame = cv2.flip(frame, 1)
 
     # Resize frame of video to 1/4 size for faster face recognition processing
     small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
@@ -86,17 +86,12 @@ while True:
 
     # process_this_frame = not process_this_frame
 
-    if frame_id % 50 == 0:
+    if frame_id % 30 == 0:
         print face_names
-        client.publish("faces", " ".join(collected_faces))
-        # client.publish("text_to_speech", " ".join(collected_faces))
-        # for f in face_names:
-        #     pass
-        #     # if f == 'George':
-        #     #     f = 'idiot'
-        #     # if f == "Nikolas":
-        #     #     f += " strongest Avenger"
-        #     client.publish("text_to_speech", "HELLO " + f)
+        for f in collected_faces:
+          client.publish("faces", f)
+        if not collected_faces:
+            client.publish("faces", "dark")  # published as led-command
 
         collected_faces.clear()
 
@@ -108,11 +103,20 @@ while True:
         bottom *= 4
         left *= 4
 
+        color = (0, 0, 255)
+
+        if name == "Nikolas":
+            color = (32, 255, 0)
+        if name == "George":
+            color = (255, 170, 0)
+        if name == "Michael":
+            color = (244, 65, 235)
+
         # Draw a box around the face
-        cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
+        cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
 
         # Draw a label with a name below the face
-        cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
+        cv2.rectangle(frame, (left, bottom - 35), (right, bottom), color, cv2.FILLED)
         font = cv2.FONT_HERSHEY_DUPLEX
         cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
 

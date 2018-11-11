@@ -36,7 +36,11 @@ class FridgeDB:
         self._last_face_name = face_name
         self._last_face_time = time.time()
         if not self.alarm_active:
-            self.set_led(face_name)
+
+            if face_name == "Unknown":
+                self.set_led('alarm')  # red
+            else:
+                self.set_led(face_name)
 
     def start_alarm(self):
         if self.alarm_active:
@@ -45,7 +49,7 @@ class FridgeDB:
         self.alarm_active = True
         self.set_led('alarm')  # 100, 100, 100
 
-        # self.client.publish("text_to_speech", "SHAME SHAME SHAME")
+        # self.client.publish("text_to_speech", "SHAME " + self._last_face_name + " SHAME");
         self.client.publish("text_to_speech", "a")
         self.client.publish("music", str("hot"))
 
@@ -59,7 +63,7 @@ class FridgeDB:
 
         self.alarm_active = False
         self.set_led('dark')  # 100, 100, 100
-        self.publish('music', "stop")
+        self.client.publish('music', "stop")
 
     def store_fridge_state(self, fs):
         door_open = fs.data[fs.open]
@@ -89,6 +93,7 @@ class FridgeDB:
         assert isinstance(fs, FridgeState)
         f = open(self.state_file, 'a')
         f.write(str(fs) + '\n')
+        # print "writing", str(fs)
         f.close()
 
     def set_led(self, command):
@@ -122,13 +127,39 @@ class FridgeDB:
         l = list()
         dist_cnt = 0
         for e in entries:
+            # print e
+            if e.data[FridgeState.open]:
+                print "skipping", e
+                continue
             d = e.data[FridgeState.distance]
+            if max(d) > 30:
+                print "skipping (large value)", e
+                continue
             dist_cnt = len(d)
             line = [e.data[FridgeState.timestamp]]
             line += d
             l.append(line)
         return l, dist_cnt
 
+    def get_wrongdoers(self):
+        f = open(self.door_file, 'r')
+        lines = f.readlines()
+        f.close()
+
+        users = ["Nikolas", "George", "Michael"]
+
+        d = dict()
+        for u in users:
+            d[u] = 0
+
+        for l in lines:
+            spl = l.split()
+            name = spl[1]
+            if not name in d:
+                d[name] = 1
+            else:
+                d[name] += 1
+        return d
 
 
 class FridgeState:

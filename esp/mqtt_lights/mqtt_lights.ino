@@ -109,6 +109,7 @@ void setup()
   client.setCallback(callback);
 
   FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
+  FastLED.setBrightness(255);
 
 }
 
@@ -154,11 +155,11 @@ void set_pattern(String pattern) {
         }
     } else if(pattern.startsWith("Nikolas")) {
         for(int i = 0; i < NUM_LEDS; i++) {
-            leds[i] = CRGB(32, 255, 0);
+            leds[i] = CRGB(0, 255, 0);
         }
     } else if(pattern.startsWith("Michael")) {
         for(int i = 0; i < NUM_LEDS; i++) {
-            leds[i] = CRGB(244, 65, 235);
+            leds[i] = CRGB(0, 0, 255);
         }
     } else if(pattern.startsWith("George")) {
         for(int i = 0; i < NUM_LEDS; i++) {
